@@ -4,20 +4,61 @@ org 7c00h
 
 jmp uboot
 
-newposition	dw	0000h
-point1		dw	30d,48d			;save point1's position
-point2		dw	60d,96d
-point3		dw	90d,144d
-matrix1		dw	140d,224d				;save matrix1's  high and wide
-matrix2		dw	80d,128d
-matrix3		dw	20d,32d
-display_matrix_option	dw	0h,0h,0h,0h;,0100h
-						db	0h
-keyin 		db 	'000000000000000000000000000000000000000'	;用来存放输入内容的空间
-hint		db 	'Please put in you personal password.#'
-errors 		db 	'error!#'
-welcomes 	db 	'You are welcome Mark!#'
-secret  	db 	'i.miss.you'
+; newposition	dw	0000h
+; point1		dw	30d,48d			;save point1's position
+; point2		dw	60d,96d
+; point3		dw	90d,144d
+; matrix1		dw	140d,224d				;save matrix1's  high and wide
+; matrix2		dw	80d,128d
+; matrix3		dw	20d,32d
+; display_matrix_option	dw	0h,0h,0h,0h;,0100h
+; 						db	0h
+; keyin 		db 	'000000000000000000000000000000000000000'	;用来存放输入内容的空间
+; hint		db 	'Please put in you personal password.#'
+; errors 		db 	'error!#'
+; welcomes 	db 	'You are welcome Mark!#'
+; secret  	db 	'i.miss.you'
+i8			db	0
+j8			db	0
+s8			db	01101110b
+rex_start	db	00000000b,00000000b,01111111b,11111100b		;37line*4byte
+			db	00000000b,00000000b,01111111b,11111100b
+			db	00000000b,00000001b,11111111b,11111111b
+			db	00000000b,00000001b,11111111b,11111111b
+			db	00000000b,00000001b,11100111b,11111111b
+			db	00000000b,00000001b,11100111b,11111111b
+			db	00000000b,00000001b,11111111b,11111111b
+			db	00000000b,00000001b,11111111b,11111111b
+			db	00000000b,00000001b,11111111b,11111111b
+			db	11000000b,00000001b,11111111b,11111111b
+			db	11000000b,00000001b,11111111b,11111111b
+			db	11000000b,00000001b,11111110b,00000000b
+			db	11000000b,00000001b,11111111b,11111000b
+			db	11000000b,00000001b,11111111b,11111000b
+			db	11100000b,00000001b,11111000b,00000000b
+			db	11100000b,00000111b,11111000b,00000000b
+			db	11110000b,00000111b,11111000b,00000000b
+			db	11110000b,00011111b,11111111b,11000000b
+			db	11111000b,01111111b,11111111b,11000000b
+			db	11111000b,01111111b,11111000b,11000000b
+			db	11111111b,11111111b,11111000b,00000000b
+			db	11111111b,11111111b,11111000b,00000000b
+			db	11111111b,11111111b,11111000b,00000000b
+			db	11111111b,11111111b,11111000b,00000000b
+			db	11111111b,11111111b,11111000b,00000000b
+			db	01111111b,11111111b,11100000b,00000000b
+			db	00111111b,11111111b,11100000b,00000000b
+			db	00011111b,11111111b,11100000b,00000000b
+			db	00001111b,11111111b,10000000b,00000000b
+			db	00000111b,11111111b,10000000b,00000000b
+			db	00000111b,11111110b,00000000b,00000000b
+			db	00000111b,10011110b,00000000b,00000000b
+			db	00000111b,10011110b,00000000b,00000000b
+			db	00000110b,00000110b,00000000b,00000000b
+			db	00000110b,00000110b,00000000b,00000000b
+			db	00000111b,10000111b,10000000b,00000000b
+			db	00000111b,10000111b,10000000b,00000000b
+
 
 
 ; ;用到的寄存器al bl ds es di si
@@ -147,54 +188,54 @@ secret  	db 	'i.miss.you'
 
 
 ;give the point(line,row)  return the address in newposition
-%macro find_site 2		
-	mov cx,%1
-	dec cx
-	mov ax,320d					;if you want 8 bit mul. al*()=ax   if you want 16 bit mul ax*()=dx.ax
-	mul cx
-	add ax,%2
-	dec ax
-	mov [newposition],ax
-%endmacro
+; %macro find_site 2		
+; 	mov cx,%1
+; 	dec cx
+; 	mov ax,320d					;if you want 8 bit mul. al*()=ax   if you want 16 bit mul ax*()=dx.ax
+; 	mul cx
+; 	add ax,%2
+; 	dec ax
+; 	mov [newposition],ax
+; %endmacro
 
-;%1:the point's line number   %2:the point's row number
-;%3:the matrix's high		  %4:the matrix's wide		%5:coular
-display_matrix:
-	;local matrixloop1,matrixloop1_in,matrixloop2,matrixloop2_in,matrixoutloop2,matrixoutloop1	
-	find_site [display_matrix_option],[display_matrix_option+2]	;top left corner's position
-	mov si,[newposition]		
+; ;%1:the point's line number   %2:the point's row number
+; ;%3:the matrix's high		  %4:the matrix's wide		%5:coular
+; display_matrix:
+; 	;local matrixloop1,matrixloop1_in,matrixloop2,matrixloop2_in,matrixoutloop2,matrixoutloop1	
+; 	find_site [display_matrix_option],[display_matrix_option+2]	;top left corner's position
+; 	mov si,[newposition]		
 
-	mov ax,0
-	cmp ax,[display_matrix_option+4]
-	je matrixoutloop1
-	jmp matrixloop1_in
-	matrixloop1:
-	inc ax
-	cmp ax,[display_matrix_option+4]
-	je matrixoutloop1
-	matrixloop1_in:
+; 	mov ax,0
+; 	cmp ax,[display_matrix_option+4]
+; 	je matrixoutloop1
+; 	jmp matrixloop1_in
+; 	matrixloop1:
+; 	inc ax
+; 	cmp ax,[display_matrix_option+4]
+; 	je matrixoutloop1
+; 	matrixloop1_in:
 
-		mov bx,0
-		cmp bx,[display_matrix_option+6]
-		je matrixoutloop2
-		jmp matrixloop2_in
-		matrixloop2:
-		inc bx
-		cmp bx,[display_matrix_option+6]
-		je matrixoutloop2
-		matrixloop2_in:
-			mov cl,byte[display_matrix_option+8]
-			mov byte[es:si],cl
-			inc si
-			jmp matrixloop2
-		matrixoutloop2:
+; 		mov bx,0
+; 		cmp bx,[display_matrix_option+6]
+; 		je matrixoutloop2
+; 		jmp matrixloop2_in
+; 		matrixloop2:
+; 		inc bx
+; 		cmp bx,[display_matrix_option+6]
+; 		je matrixoutloop2
+; 		matrixloop2_in:
+; 			mov cl,byte[display_matrix_option+8]
+; 			mov byte[es:si],cl
+; 			inc si
+; 			jmp matrixloop2
+; 		matrixoutloop2:
 
-		add si,320d
-		sub si,[display_matrix_option+6]
-		jmp matrixloop1
+; 		add si,320d
+; 		sub si,[display_matrix_option+6]
+; 		jmp matrixloop1
 
-	matrixoutloop1:
-	ret
+; 	matrixoutloop1:
+; 	ret
 
 ;0 background coular
 %macro setcoular 4
@@ -213,25 +254,44 @@ display_matrix:
 %endmacro
 
 
-%macro assigndw	2
-	mov ax,%2
-	mov %1,ax
-%endmacro
+; %macro assigndw	2
+; 	mov ax,%2
+; 	mov %1,ax
+; %endmacro
 
 %macro assigndb	2
 	mov al,%2
 	mov %1,al
 %endmacro
 
-%macro display_matrix_  5
-	assigndw [display_matrix_option],%1
-	assigndw [display_matrix_option+2],%2
-	assigndw [display_matrix_option+4],%3
-	assigndw [display_matrix_option+6],%4
-	assigndb [display_matrix_option+8],%5
-	call display_matrix
-%endmacro
+; %macro display_matrix_  5
+; 	assigndw [display_matrix_option],%1
+; 	assigndw [display_matrix_option+2],%2
+; 	assigndw [display_matrix_option+4],%3
+; 	assigndw [display_matrix_option+6],%4
+; 	assigndb [display_matrix_option+8],%5
+; 	call display_matrix
+; %endmacro
 
+print_byte:			;	mov bh,%1 	printf a byte from s8
+	mov bl,10000000b
+	mov al,0
+	dec si
+	print_byte_start:
+	cmp al,8
+	je print_byte_end
+	inc al
+	mov bh,[s8]
+	and bh,bl
+	inc si
+	shr bl,1
+	cmp bh,0
+	je print_byte_start
+	mov cl,3
+	mov byte[es:si],cl
+	jmp print_byte_start
+	print_byte_end:
+	ret
 
 uboot:
 	;VGA320*200*8 display mode  320row 200line
@@ -245,14 +305,79 @@ uboot:
 	mov ax,0
 	mov ds,ax		
 
-	setcoular 0,255d,255d,255d		;set the background coular as white
-	setcoular 1,255d,0,0			;1 represent red
-	setcoular 2,0,255d,0			;2 represent green
+	; setcoular 0,255d,255d,255d		;set the background coular as white
+	; setcoular 1,255d,0,0			;1 represent red
+	; setcoular 2,0,255d,0			;2 represent green
 	setcoular 3,0,0,255d			;3 represent blue
 
-	display_matrix_ [point1],[point1+2],[matrix1],[matrix1+2],1
-	display_matrix_ [point2],[point2+2],[matrix2],[matrix2+2],2
-	display_matrix_ [point3],[point3+2],[matrix3],[matrix3+2],3
+	; mov si,3200d
+	; mov di,rex_start+2
+
+	; mov al,[di]
+	; mov [s8],al
+	; call print_byte
+
+	mov si,3200d
+	mov di,rex_start
+
+	assigndb [i8],0
+	rex_loop1:
+	mov al,[i8]
+	cmp al,37d
+	je rex_loop1_out
+		assigndb [j8],0
+		rex_loop2:
+		mov al,[j8]
+		cmp al,4d
+		je rex_loop2_out
+			assigndb [s8],[di]
+			call print_byte
+			inc di
+			mov al,[j8]
+			inc al
+			mov [j8],al
+			jmp rex_loop2
+		rex_loop2_out:
+		add si,320d
+		sub si,32d	
+		mov al,[i8]
+		inc al
+		mov [i8],al
+		jmp rex_loop1
+	rex_loop1_out:
+
+	; display_matrix_ [point1],[point1+2],[matrix1],[matrix1+2],1
+	; display_matrix_ [point2],[point2+2],[matrix2],[matrix2+2],2
+	; display_matrix_ [point3],[point3+2],[matrix3],[matrix3+2],3
+
+; 	mov bh,2
+; 	mov bl,5
+; 	mov [i8],bh
+; 	mov [j8],bl
+; 	mov al,10000000b
+
+; 	ssss:
+; 	mov bl,[j8]
+; 	cmp bl,20
+; 	je endss
+; 	inc bl
+; 	mov [j8],bl
+; 	mov ah,[ps]
+; 	and ah,al
+; 	cmp ah,0
+; 	je sss
+; 	mov cl,1
+; 	mov bh,[i8]
+; 	call displaypoint
+; 	shr al,1
+; 	jmp ssss
+; 	sss:
+; 	mov cl,3
+; 	mov bh,[i8]
+; 	call displaypoint
+; 	shr al,1
+; 	jmp ssss
+; endss:
 	; mov bh,1
 	; mov bl,1
 	; mov cl,0x01
