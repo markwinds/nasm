@@ -192,16 +192,16 @@ god         dw      1h
 god1        dw      1h
 god2        dw      1h
 god3        dw      1h
-queue_O_length	dw	1h			;when you change the roadblock's(queue_O) number this option must been change to fit it
+queue_O_length	dw	4h			;when you change the roadblock's(queue_O) number this option must been change to fit it
 queue_I_length	dw	0h
-queue_O		dw		20d,330d,	22d,400d,	24d,500d,	26d,600d,		;high,position
-			dw		410d,28d,	430d,30d,	450d,32d,	470d,34d
+queue_O		dw		20d,330d,	22d,350d,	24d,360d,	26d,400d,		;high,position
+			dw		28d,410d,	430d,30d,	450d,32d,	470d,34d
 			dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
 			dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
-queue_I		dw		10d,50d,	20d,100d,    30d,150d,	40d,200d		;high,position
+queue_I		dw		10d,50d,	20d,100d,   30d,150d,	40d,200d		;high,position
 			dw		50d,250d,	60d,30d,	450d,32d,	470d,34d
 			dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
-;co_detection	dw	0h			;control collision detection
+co_detection	dw	0h			;control collision detection
 
 
 ;give the point(line,row)  return the address in newposition
@@ -260,13 +260,13 @@ display_matrix:
 		cmp bx,[display_matrix_option+6]
 		je matrixoutloop2
 		matrixloop2_in:
-			; mov dx,[co_detection]
-			; cmp dx,1
-			; jne no_detection
-			; mov dl,[es:si]
-			; cmp dl,3
-			; je game_over
-			; no_detection:
+			mov dx,[co_detection]
+			cmp dx,1
+			jne no_detection
+			mov dl,[es:si]
+			cmp dl,3
+			je game_over
+			no_detection:
 			mov cl,byte[display_matrix_option+8]
 			mov byte[es:si],cl
 			inc si
@@ -491,6 +491,8 @@ updata_position:
 updata_queue_O:
 	mov di,queue_O+2				;di save the address
 	mov cx,[queue_O_length]
+	cmp cx,0
+	je queue_O_not_show
 	queue_O_loop1_start:
 	cmp cx,0
 	je queue_O_loop1_end
@@ -535,6 +537,8 @@ updata_queue_O:
 updata_queue_I:
 	mov di,queue_I+2				;di save the address
 	mov cx,[queue_I_length]
+	cmp cx,0
+	je queue_I_not_show
 	queue_I_loop1_start:
 	cmp cx,0
 	je queue_I_loop1_end
@@ -748,9 +752,9 @@ uboot:
 					show_roadblock_ 0
 					call updata_queue_O
 					call updata_queue_I
-					;assigndw [co_detection],1h			;open the function of detection
+					assigndw [co_detection],1h			;open the function of detection
 					show_roadblock_ 1					;game over when detection
-					;assigndw [co_detection],0h			;close the function of detection
+					assigndw [co_detection],0h			;close the function of detection
 				next_check:
 				;timer4 loop,hear to add main opration to updata picture
 
@@ -778,9 +782,9 @@ uboot:
 	timer1_out:	
 
 	game_over:
-	; assigndw [co_detection],0h
-	; assigndb [rex_picture],4
-	; call show_picture
+	assigndw [co_detection],0h
+	assigndb [rex_picture],4
+	call show_picture
 
 
 
