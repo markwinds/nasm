@@ -540,7 +540,7 @@ print_byte:			;	mov bh,%1 	printf a byte from s8
 	shr bl,1
 	cmp bh,0
 	je print_byte_start
-	mov cl,3
+	;mov cl,3
 	mov byte[es:si],cl
 	jmp print_byte_start
 	print_byte_end:
@@ -559,6 +559,7 @@ display_rex:
 		cmp al,4d
 		je rex_loop2_out
 			assigndb [s8],[di]
+			mov cl,3							;if want change rex's coular, you should change the value of cl
 			call print_byte
 			inc di
 			mov al,[j8]
@@ -910,6 +911,159 @@ jmp $
 
 
 
+;------------------------------------------character library---------------------------------------
+character_a	DB  000,000,000,000,000,000,000,07Ch,06Eh,00Eh,07Eh,0EEh,0EEh,0FEh,000,000
+			DB  000
+character_b DB  000,000,000,000,0E0h,0E0h,0E0h,0FEh,0F7h,0E7h,0E3h,0E7h,0E7h,0FEh,000,000
+			DB  000           
+character_c	DB  000,000,000,000,000,000,000,07Ch,0E4h,0E0h,0E0h,0E0h,0E4h,07Ch,000,000
+			DB  000
+character_d	DB  000,000,000,000,007h,007h,007h,07Fh,0E7h,0E7h,0E7h,0E7h,0EFh,07Fh,000,000
+			DB  000
+character_e	DB  000,000,000,000,000,000,000,07Ch,0EEh,0E6h,0FEh,0E0h,0E0h,07Eh,000,000
+			DB  000
+character_f	DB  000,000,000,000,070h,060h,060h,0F0h,060h,060h,060h,060h,060h,060h,000,000
+			DB  000
+character_g	DB  000,000,000,000,000,000,000,07Fh,0EFh,0E7h,0E7h,0E7h,0EFh,07Fh,006h,00Eh
+			DB  0FCh
+character_h	DB  000,000,000,000,0E0h,0E0h,0E0h,0FEh,0F6h,0E7h,0E7h,0E7h,0E7h,0E7h,000,000
+			DB  000
+character_i	DB  000,000,000,000,0E0h,000,000,0E0h,0E0h,0E0h,0E0h,0E0h,0E0h,0E0h,000,000
+			DB  000
+character_j	DB  000,000,000,000,0E0h,000,000,0E0h,0E0h,0E0h,0E0h,0E0h,0E0h,0E0h,0E0h,0C0h
+			DB  0C0h
+character_k	DB  000,000,000,000,0E0h,0E0h,0E0h,0EEh,0FCh,0F8h,0F0h,0F8h,0FCh,0EEh,000,000
+			DB  000
+character_l	DB  000,000,000,000,0E0h,0E0h,0E0h,0E0h,0E0h,0E0h,0E0h,0E0h,0E0h,0E0h,000,000
+			DB  000
+character_m	DB  000,000,000,000,000,000,0FFh,0DBh,0DBh,0DBh,0DBh,0DBh,0C3h,0C3h,000,000
+			DB  000
+character_n	DB  000,000,000,000,000,000,000,0FEh,0F6h,0E7h,0E7h,0E7h,0E7h,0E7h,000,000
+			DB  000
+character_o	DB  000,000,000,000,000,000,000,07Eh,0E7h,0E7h,0E7h,0E7h,0E6h,07Eh,000,000
+			DB  000
+character_p	DB  000,000,000,000,000,000,000,0FEh,0F7h,0E7h,0E3h,0E7h,0E7h,0FEh,0E0h,0E0h
+			DB  0E0h
+character_q	DB  000,000,000,000,000,000,000,07Fh,0EFh,0E7h,0E7h,0E7h,0EFh,07Fh,007h,007h
+			DB  007h
+character_r	DB  000,000,000,000,000,000,000,0F8h,0F0h,0E0h,0E0h,0E0h,0E0h,0E0h,000,000
+			DB  000
+character_s	DB  000,000,000,000,000,000,000,07Ch,0ECh,0E0h,078h,01Ch,0DCh,0F8h,000,000
+			DB  000
+character_t	DB  000,000,000,000,000,060h,060h,0F8h,060h,060h,060h,060h,060h,078h,000,000
+			DB  000
+character_u	DB  000,000,000,000,000,000,000,0E6h,0E6h,0E6h,0E6h,0E6h,0EEh,07Eh,000,000
+			DB  000
+character_v	DB  000,000,000,000,000,000,000,0C6h,0EEh,0EEh,06Ch,07Ch,038h,038h,000,000
+			DB  000
+character_w	DB  000,000,000,000,000,000,000,0C3h,0C3h,0DBh,0DBh,0DBh,0FFh,0FFh,000,000
+			DB  000
+character_x	DB  000,000,000,000,000,000,000,0ECh,07Ch,078h,030h,078h,0FCh,0CCh,000,000
+			DB  000
+character_y	DB  000,000,000,000,000,000,000,0C6h,0EEh,0EEh,06Ch,07Ch,038h,038h,038h,070h
+			DB  0E0h
+character_z	DB  000,000,000,000,000,000,000,0FCh,01Ch,038h,030h,070h,0E0h,0FCh,000,000
+			DB  000
+character_block	DB 000,000,000,000,000,000,000,0h,0h,0h,00,0h,0h,0h,000,000
+			DB  000
+
+stringp1	db 'abcdefghijklmnopqrstuvwxyz#'				;you can show string
+
+
+
+;-----------------------------------------set as option-------------------------------
+display_option1	dw 	0
+display_option2	dw 	0
+display_option3	db 	0
+display_option4	dw 	0
+
+
+;-----------------------------------------function for show string and character--------------------------
+display_character:                  
+	assigndb [i8],0
+	display_character_loop1:
+	mov al,[i8]
+	cmp al,17d                       ;please change the option when you change matrix's line
+	je display_character_loop1_out
+		assigndb [j8],0
+		display_character_loop2:
+		mov al,[j8]
+		cmp al,1d                   ;this option is (matrix's line/4)
+		je display_character_loop2_out
+			assigndb [s8],[di]
+			call print_byte
+			inc di
+			mov al,[j8]
+			inc al
+			mov [j8],al
+			jmp display_character_loop2
+		display_character_loop2_out:
+		add si,320d
+		sub si,7d					;this option is (matrix's line*7/8)
+		mov al,[i8]
+		inc al
+		mov [i8],al
+		jmp display_character_loop1
+	display_character_loop1_out:
+	ret 
+
+;%1 %2:position %3:coular %4:data
+;for example    display_character_ 5,20h,1,character_m
+%macro display_character_	4	
+	find_site %1,%2
+	mov si,[newposition]
+	mov di,%4
+	mov cl,%3
+	call display_character
+%endmacro
+
+display_string:
+	mov bx,[display_option4]
+	mov ax,0
+	mov al,byte[bx]
+	cmp al,'#'
+	je display_string_end
+	cmp al,' '
+	je display_block
+		sub ax,'a'
+		mov cx,17d
+		mul cx
+		add ax,character_a
+		mov [i16],ax
+		display_character_ [display_option1],[display_option2],[display_option3],[i16]
+		display_block:
+		mov ax,[display_option2]
+		add ax,9d
+		mov [display_option2],ax
+		cmp ax,311d
+		jb display_string_not_limit
+		assigndw [display_option2],1
+		mov ax,[display_option1]
+		add ax,18d
+		mov [display_option1],ax
+		cmp ax,182d
+		ja display_string_end
+		display_string_not_limit:
+		mov ax,[display_option4]
+		add ax,1d
+		mov [display_option4],ax
+		jmp display_string
+	display_string_end:
+	ret
+
+;for example   display_string_ 100d,50d,1,stringp1   will show stringp1 in 100,50 position with NO1 coular
+%macro display_string_	4	
+	assigndw [display_option1],%1
+	assigndw [display_option2],%2
+	assigndb [display_option3],%3
+	assigndw [display_option4],%4
+	call display_string
+%endmacro
+	
+	
+
+
+
 ;-----------------------------------------grammar example-----------------------------------------------
 ;outDelay equ 5000		for example, this statement is the same to 'define outDelay 5000' in C.And it don't need space.
 
@@ -950,7 +1104,5 @@ jmp $
 
 
 	
-
-
 
 
