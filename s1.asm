@@ -1,6 +1,7 @@
 ;密码未加密
-;6.11	add a function to display matrix
 ;We always manage line data first than row in follow code. 
+;6.11	add a function to display matrix
+;6.25 change interrupt vector table for timer
 org 8400h
 
 jmp uboot
@@ -160,6 +161,7 @@ rex_die		db	00000000b,00000000b,01111111b,11111100b		;37line*4byte
 
 
 i16				dw	0h											;temporary variable
+j16				dw	0h
 rex_site		dw	130d,80d									;main option when display rex
 rex_site_before	dw	130d,80d
 timer1			dw	0h
@@ -167,6 +169,12 @@ timer2			dw	0h
 timer3			dw	0h
 timer4			dw	0h
 timers			dw	0h
+timer_flag1		dw	0h
+timer_flag2		dw	0h
+timer_flag3		dw	0h
+timer_flag4		dw	0h
+timer_flag5		dw	0h
+timer_flag6		dw	0h
 v_init			dw	14d
 rex_v			dw	0h
 g				dw	1h
@@ -320,6 +328,21 @@ input:
 
 
 ;---------------------------------------public function-------------------------------------------
+%macro add8 2
+	mov ax,0
+	mov al,byte%1
+	add ax,%2
+	mov byte%1,al
+%endmacro
+
+
+%macro add16 2
+	mov ax,%1
+	add ax,%2
+	mov %1,ax
+%endmacro
+
+
 ;0 background coular
 %macro setcoular 4
 	mov dx,0x3c8
@@ -621,6 +644,7 @@ updata_position:	;when rex is off the ground, this function will find the positi
 	mov [rex_v],bx
 	add ax,bx
 	mov [rex_site],ax
+	;mygod 7,20,god
 	mov ax,[v_init]
 	mov bx,[rex_v]
 	cmp bx,ax
@@ -628,7 +652,8 @@ updata_position:	;when rex is off the ground, this function will find the positi
 	assigndb [rex_state],1
 	ret
 	v_negative:
-	mygod 1,[rex_v],god3
+	;mygod 1,[rex_v],god3
+	;mygod 7,20,god
 	mov cx,[g]
 	mov bx,[rex_v]
 	mov ax,[rex_site]
@@ -768,8 +793,98 @@ show_roadblock:					;check queue_I and display the roadblock
 %endmacro
 
 
+int_8_timer:
+	push ax
+	push bx
+	push cx
+	push dx
+	push si
+	push di
+	push es
+
+	add16 [timer_flag1],1
+	add16 [timer_flag2],1
+	add16 [timer_flag3],1
+	; add16 [timer_flag4],1
+	; add16 [timer_flag5],1
+	; add16 [timer_flag6],1
+
+	; mov ax,[j16]
+	; inc ax
+	; mov [j16],ax
+	; ;add16 [j16],1
+	; mov dx,[i16]
+	; mov bx,[timer_flag1]
+	; mov cl,3
+
+	; call displaypoint					;dx represent line   bx represent row  cl represent colour  No zero!!!!
+
+	mov al,0x20			
+	mov dx,0x20
+	out dx,al
+
+	pop es
+	pop di
+	pop si
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	iret
 
 
+key_put_in:
+	push ax
+	push bx
+	push cx
+	push dx
+	push si
+	push di
+	push es
+
+	mov dx,0x20			;中断响应，退出优先级,中断芯片的端口20
+	mov al,0x61
+	out dx,al
+	mov dx,0x60			;键盘地址60
+	in al,dx
+
+	cmp al,0x1e
+	jne key_put_in_end
+
+	;int 16h
+	;cmp al,' '
+	;jne notblank
+	mov al,[rex_state]
+	cmp al,0
+	je key_put_in_end
+	assigndb [rex_state],0
+	assigndw [rex_v],[v_init]
+	assigndb [v_flag],0d
+	assigndb [rex_picture],1
+	assigndb [rex_picture_next],1
+	;notblank:
+
+	; add16 [j16],1
+	; mov dx,[i16]
+	; mov bx,[j16]
+	; mov cl,3
+
+	; call displaypoint
+
+	key_put_in_end:
+
+	pop es
+	pop di
+	pop si
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	iret
+
+
+
+;game_over:
 ;--------------------------------------------------main------------------------------------------
 uboot:
 	;VGA320*200*8 display mode  320row 200line
@@ -786,7 +901,32 @@ uboot:
 	setcoular 0,255d,255d,255d		;set the background coular as white
 	setcoular 1,255d,0,0			;1 represent red
 	setcoular 2,0,255d,0			;2 represent green
-	setcoular 3,0,0,255d			;3 represent blue
+	setcoular 3,0,0d,255d			;3 represent blue
+
+	assigndw [i16],1
+	assigndw [j16],1
+	; assigndw [timer_flag1],1
+	
+
+	sti
+	mov word[ds:0x20],int_8_timer
+	mov word[ds:0x22],0
+	mov word[ds:0x24],key_put_in
+	mov word[ds:0x26],0
+
+; start:
+; 	mov dx,1
+; 	mov bx,[timer_flag1]
+; 	mov cl,3
+; 	call displaypoint	
+; 	; mov word[ds:0x20],int_8_timer
+; 	; mov word[ds:0x22],0
+; 	jmp start
+
+;  game_over:
+
+
+
 
 ;--------------------------------------------------main opration----------------------------------------------------
 	;timer3 and timer4 are set for timekeeping,and main opration is in the loop.
@@ -794,118 +934,177 @@ uboot:
 	mov ax,[rex_site]
 	add ax,37d						
 	display_matrix_  ax,1,3,320d,2	;display the road
-	mov ax,0						;when system run,timer1 add 1 every 100*100 update
-	mov [timer1],ax
-	mov [timer2],ax
-	mov [timers],ax
-	;hear can add timer
-	timer1_:
-	;mov ax,[timer1]				;there is no compare, because the system should run except the rex die
-	;cmp ax,50000d
-	;je timer1_out
-		mov ax,0
-		mov [timer3],ax
-		timer3_:
-		mov ax,[timer3]
-		cmp ax,50d
-		je timer3_out
-			mov ax,0
-			mov [timer4],ax
-			timer4_:
-			mov ax,[timer4]
-			cmp ax,50d
-			je timer4_out
+	
+	main_opration:   
+	mov al,[rex_state]
+	cmp al,1
+	je rex_state1
+	mov ax,[timer_flag1]
+	cmp ax,4d					;change here to change time's length
+	jb out_updata
+		assigndw [timer_flag1],0
+		;mygod 5,20,god2
+		assigndb [rex_picture],1
+		assigndb [rex_picture_next],1
+		call updata_position
+		call show_picture
+		assigndb [rex_picture],[rex_picture_next]
+		assigndw [rex_site_before],[rex_site]
+		assigndw [rex_site_before+2],[rex_site+2]
+	jmp out_updata
 
-				;timer4 loop,hear to add main opration to updata picture    
-				mov al,[rex_state]
-				cmp al,1
-				je rex_state1
-                ;mygod 1,20,god3
-				mov ax,[timer2]
-				cmp ax,20d					;change here to change time's length
-				jb out_updata
-                    assigndw [timer2],0
-					assigndb [rex_picture],1
-					assigndb [rex_picture_next],1
-					call updata_position
-					call show_picture
-					assigndb [rex_picture],[rex_picture_next]
-					assigndw [rex_site_before],[rex_site]
-					assigndw [rex_site_before+2],[rex_site+2]
-				jmp out_updata
+	rex_state1:
+	; mov ah,1h
+	mov ax,[timer_flag2]
+	cmp ax,2d				;change here to change time's length
+	jb out_updata
+		;mygod 2,20,god1
+		assigndw [timer_flag2],0
+		mov al,[rex_picture]
+		cmp al,2
+		jne rex_picture_next3
+		assigndb [rex_picture_next],3
+		jmp rex_picture_next_
+		rex_picture_next3:
+		cmp al,3
+		jne rex_picture_next_
+		assigndb [rex_picture_next],2
+		rex_picture_next_:
+		call show_picture
+		assigndb [rex_picture],[rex_picture_next]
+		assigndw [rex_site_before],[rex_site]
+		assigndw [rex_site_before+2],[rex_site+2]
+	out_updata:
+	
+	mov ax,[timer_flag3]
+	cmp ax,2d				;change here to change time's length
+	jb next_check
+		assigndw [timer_flag3],0
+		show_roadblock_ 0
+		call updata_queue_O
+		call updata_queue_I
+		assigndw [co_detection],1h			;open the function of detection
+		show_roadblock_ 1					;game over when detection
+		assigndw [co_detection],0h			;close the function of detection
+	next_check:
+	jmp main_opration
 
-				rex_state1:
-				mov ah,1h
-				int 16h
-				cmp al,' '
-				jne notblank
-				assigndb [rex_state],0
-				assigndw [rex_v],[v_init]
-				assigndb [v_flag],0d
-				assigndb [rex_picture],1
-                assigndb [rex_picture_next],1
-				notblank:
-				mov ax,[timer1]
-				cmp ax,4				;change here to change time's length
-				jb out_updata
-					mygod 2,20,god1
-					assigndw [timer1],0
-					mov al,[rex_picture]
-					cmp al,2
-					jne rex_picture_next3
-					assigndb [rex_picture_next],3
-					jmp rex_picture_next_
-					rex_picture_next3:
-					cmp al,3
-					jne rex_picture_next_
-					assigndb [rex_picture_next],2
-					rex_picture_next_:
-					call show_picture
-					assigndb [rex_picture],[rex_picture_next]
-					assigndw [rex_site_before],[rex_site]
-					assigndw [rex_site_before+2],[rex_site+2]
-				out_updata:
-				
-				mov ax,[timers]
-				cmp ax,2				;change here to change time's length
-				jb next_check
-					assigndw [timers],0
-					show_roadblock_ 0
-					call updata_queue_O
-					call updata_queue_I
-					assigndw [co_detection],1h			;open the function of detection
-					show_roadblock_ 1					;game over when detection
-					assigndw [co_detection],0h			;close the function of detection
-				next_check:
-				;timer4 loop,hear to add main opration to updata picture
-
-				mov ax,[timer4]
-				inc ax
-				mov [timer4],ax
-				jmp timer4_
-			timer4_out:		
-			mov ax,[timer3]
-			inc ax
-			mov [timer3],ax
-			jmp timer3_
-		timer3_out:		
-		;hear can add timer
-		mov ax,[timer1]
-		inc ax
-		mov [timer1],ax
-		mov ax,[timer2]
-		inc ax
-		mov [timer2],ax
-		mov ax,[timers]
-		inc ax
-		mov [timers],ax
-		jmp timer1_
-	timer1_out:	
+	
 
 	game_over:								;when rex die,here will show the die picture
 	assigndw [co_detection],0h
 	assigndb [rex_picture],4
 	call show_picture
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+; ;--------------------------------------------------main opration----------------------------------------------------
+; 	;timer3 and timer4 are set for timekeeping,and main opration is in the loop.
+; 	;timer1 and timer2 are set for different request of diferent length of time.
+; 	mov ax,[rex_site]
+; 	add ax,37d						
+; 	display_matrix_  ax,1,3,320d,2	;display the road
+	
+; 	main_opration:   
+; 	mov al,[rex_state]
+; 	cmp al,1
+; 	je rex_state1
+; 	mov ax,[timer_flag1]
+; 	cmp ax,40d					;change here to change time's length
+; 	jb out_updata
+; 		assigndw [timer_flag1],0
+; 		;mygod 5,20,god2
+; 		assigndb [rex_picture],1
+; 		assigndb [rex_picture_next],1
+; 		call updata_position
+; 		call show_picture
+; 		assigndb [rex_picture],[rex_picture_next]
+; 		assigndw [rex_site_before],[rex_site]
+; 		assigndw [rex_site_before+2],[rex_site+2]
+; 	jmp out_updata
+
+; 	rex_state1:
+; 	mov ah,1h
+; 	int 16h
+; 	cmp al,' '
+; 	jne notblank
+; 	assigndb [rex_state],0
+; 	assigndw [rex_v],[v_init]
+; 	assigndb [v_flag],0d
+; 	assigndb [rex_picture],1
+; 	assigndb [rex_picture_next],1
+; 	notblank:
+; 	mov ax,[timer_flag2]
+; 	cmp ax,20d				;change here to change time's length
+; 	jb out_updata
+; 		;mygod 2,20,god1
+; 		assigndw [timer_flag2],0
+; 		mov al,[rex_picture]
+; 		cmp al,2
+; 		jne rex_picture_next3
+; 		assigndb [rex_picture_next],3
+; 		jmp rex_picture_next_
+; 		rex_picture_next3:
+; 		cmp al,3
+; 		jne rex_picture_next_
+; 		assigndb [rex_picture_next],2
+; 		rex_picture_next_:
+; 		call show_picture
+; 		assigndb [rex_picture],[rex_picture_next]
+; 		assigndw [rex_site_before],[rex_site]
+; 		assigndw [rex_site_before+2],[rex_site+2]
+; 	out_updata:
+	
+; 	mov ax,[timer_flag3]
+; 	cmp ax,20d				;change here to change time's length
+; 	jb next_check
+; 		assigndw [timer_flag3],0
+; 		show_roadblock_ 0
+; 		call updata_queue_O
+; 		call updata_queue_I
+; 		assigndw [co_detection],1h			;open the function of detection
+; 		show_roadblock_ 1					;game over when detection
+; 		assigndw [co_detection],0h			;close the function of detection
+; 	next_check:
+; 	jmp main_opration
+
+	
+
+; 	game_over:								;when rex die,here will show the die picture
+; 	assigndw [co_detection],0h
+; 	assigndb [rex_picture],4
+; 	call show_picture
+
+
+
+
+
 
 jmp $	
 
@@ -1060,8 +1259,6 @@ display_string:
 	call display_string
 %endmacro
 	
-	
-
 
 
 ;-----------------------------------------grammar example-----------------------------------------------
@@ -1103,6 +1300,80 @@ display_string:
 
 
 
+
+
+
+
+
+
+
+
+
+
 	
 
+
+; org 0x8400
+; jmp start
+
+; num db 0x41
+
+; start:
+
+;     mov ax,0xb800
+;     mov es,ax
+; 	mov ax,0
+; 	mov ds,ax
+
+; 	sti
+; 	mov word [ds:0x24],int_key 
+; 	mov word [ds:0x26],0
+	
+	
+	
+; 	jmp $
+	
+; int_key:
+
+; 	push bx
+; 	push dx
+; 	push ds
+; 	push ax
+	
+; 	mov dx,0x20
+; 	mov al,0x61
+; 	out dx,al
+; 	mov dx,0x60
+; 	in al,dx
+
+
+
+; 	cmp al,0x1e
+; 	je A1
+; 	jmp x
+	
+; 	A1:
+; 		inc byte[ds:8200h]
+; 		mov bl,byte[ds:8200h]
+; 		mov bh,0
+	
+; 		mov byte[ds:8200h+bx],'a'
+; 		jmp x
+	
+
+; 	mov dx,0x20			;中断响应，退出优先级,中断芯片的端口20
+; 	mov al,0x61
+; 	out dx,al
+; 	mov dx,0x60			;键盘地址60
+; 	in al,dx
+
+
+
+; x:
+
+; 	pop ax
+; 	pop ds
+; 	pop dx
+; 	pop bx
+; 	iret
 
