@@ -167,9 +167,27 @@ rex_die		db	00000000b,00000000b,01111111b,11111100b		;37line*4byte  the picture 
 			db	00000111b,10000111b,10000000b,00000000b
 			db	00000111b,10000111b,10000000b,00000000b
 
+apple		DB  001h,080h,000h,000h,0C0h,000h,000h,060h,000h,000h,020h,000h,000h,078h,000h,003h
+			DB  0FFh,000h,00Fh,0FFh,0C0h,01Fh,0FFh,0E0h,03Fh,0FFh,0F0h,07Fh,0FFh,0F8h,07Fh,0FFh
+			DB  088h,0FFh,0FFh,000h,0FFh,0FEh,000h,0FFh,0FCh,000h,0FFh,0FCh,000h,0FFh,0FCh,000h
+			DB  0FFh,0FCh,000h,0FFh,0FEh,000h,0FFh,0FFh,000h,0FFh,0FFh,088h,07Fh,0FFh,0F0h,03Fh
+			DB  0FFh,0E0h,01Fh,0FFh,0E0h,00Fh,0FFh,080h,007h,0FFh,000h,003h,0FEh,000h,000h,000h
+			DB  000h
 
+fire		DB  000h,000h,000h,000h,080h,000h,001h,080h,000h,001h,0C0h,000h,001h,0E4h,000h,003h
+			DB  0F6h,000h,003h,0F7h,000h,003h,0F7h,080h,013h,0F7h,080h,01Bh,0FFh,080h,01Fh,0FFh
+			DB  080h,01Fh,0FFh,0C0h,01Fh,0FFh,0C0h,01Fh,0FFh,0C0h,03Fh,0FFh,0E0h,03Fh,0FFh,0E0h
+			DB  03Fh,0FFh,0E0h,03Fh,0FFh,0E0h,03Fh,0FFh,0E0h,03Fh,0FFh,0E0h,01Fh,0FFh,0C0h,01Fh
+			DB  0FFh,0C0h,00Fh,0FFh,080h,00Fh,0FFh,080h,007h,0FFh,000h,003h,0FFh,000h,000h,0FCh
+			DB  000h
+
+
+apple16			dw	0h
+p16				dw  0h
+s16				dw  0h
 i16				dw	0h											;temporary variable
 j16				dw	0h
+score			dw  0h
 rex_site		dw	130d,80d									;main option when display rex
 rex_site_before	dw	130d,80d
 timer1			dw	0h
@@ -187,15 +205,20 @@ v_init			dw	14d
 rex_v			dw	0h
 g				dw	1h
 co_detection	dw	0h											;control collision detection
-queue_O_length_block	dw	6h											;when you change the roadblock's(queue_O) number this option must been change to fit it
-queue_I_length_block	dw	0h
-queue_O_block			dw		20d,330d,	22d,600d,	24d,1000d,	26d,1500d,		;high,position
-						dw		28d,2000d,	20d,2100d,	450d,32d,	470d,34d
-						dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
-						dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
-queue_I_block			dw		10d,50d,	20d,100d,   30d,150d,	40d,200d		
-						dw		50d,250d,	60d,30d,	450d,32d,	470d,34d
-						dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
+queue_O_length	dw	6h											;when you change the roadblock's(queue_O) number this option must been change to fit it
+queue_I_length	dw	0h
+queue_O			dw		20d,330d,0h,	22d,600d,0h,	24d,1000d,0h,	26d,1500d,0h,		;high,position,flag
+				dw		28d,2000d,0h,	20d,2100d,0h,	450d,32d,0h,	470d,34d,0h,
+				dw		490d,36d,0h,	510d,38d,0h,	530d,40d,0h,	550d,42d,0h,
+			
+queue_I			dw		20d,330d,0h,	22d,600d,0h,	24d,1000d,0h,	26d,1500d,0h,		;high,position
+				dw		28d,2000d,0h,	20d,2100d,0h,	450d,32d,0h,	470d,34d,0h,
+				dw		490d,36d,0h,	510d,38d,0h,	530d,40d,0h,	550d,42d,0h,
+
+apple_queue_O_length	dw	5h											;when you change the roadblock's(queue_O) number this option must been change to fit it
+apple_queue_I_length	dw	0h
+apple_queue_O			dw		40d,200d,0d,	50d,450d,0d,		40d,500d,0d,	50d,540d,0d,	50d,790d,0d,		20d,520d,0d			;line,row,flag
+apple_queue_I			dw		10d,50d,0d,		20d,100d,0d,		20d,520d,0d,	20d,330d,0d,	20d,480d,0d,		20d,520d,0d
 
 newposition		dw	0000h										;use to transfer parameters
 point1			dw	30d,48d										;save point1's position
@@ -220,6 +243,8 @@ i8				db	0											;temporary variable
 j8				db	0
 s8				db	01101110b
 n8				db  0h
+p8				db  0h
+b8            	db  0h
 keyin 			db 	'000000000000000000000000000000000000000'	;use to save the characters you input
 hint			db 	'Please put in you personal password.#'		;show the marked words
 errors 			db 	'error!#'
@@ -659,6 +684,44 @@ show_picture:
 
 
 
+;show prop such as fire and apple
+display_prop:
+	assigndb [i8],0
+	prop_loop1:
+	mov al,[i8]
+	cmp al,27d
+	je prop_loop1_out
+		assigndb [j8],0
+		prop_loop2:
+		mov al,[j8]
+		cmp al,3d
+		je prop_loop2_out
+			assigndb [s8],[di]
+			mov cl,[p8]							;if want change rex's coular, you should change the value of cl. And you must change the collision detection
+			call print_byte
+			inc di
+			mov al,[j8]
+			inc al
+			mov [j8],al
+			jmp prop_loop2
+		prop_loop2_out:
+		add si,320d
+		sub si,21d	
+		mov al,[i8]
+		inc al
+		mov [i8],al
+		jmp prop_loop1
+	prop_loop1_out:
+	ret 
+
+%macro display_prop_	4
+	find_site %1,%2
+	mov si,[newposition]
+	mov di,%3
+	assigndb [p8],%4
+	call display_prop
+%endmacro
+
 
 ;------------------------------------------------------------contral algorithm------------------------------------------------------------
 updata_position:	;when rex is off the ground, this function will find the position that rex fit
@@ -710,7 +773,7 @@ updata_queue_O:						;queue to cotrol the roadblock
 		mov bx,[di]
 		dec bx
 		mov [di],bx
-		add di,4
+		add di,6
 		dec cx
 		jmp queue_O_loop1_start
 	queue_O_loop1_end:				;dec the position
@@ -726,33 +789,27 @@ updata_queue_O:						;queue to cotrol the roadblock
 	mov di,queue_O					;take out the first element to queue_I
 	mov ax,[queue_I_length]
 	dec ax
-	mov cx,4
+	mov cx,6
 	mul cx
 	mov si,ax
 	assigndw word[queue_I+si],[di]
 	assigndw word[queue_I+si+2],[di+2]
+	assigndw word[queue_I+si+4],[di+4]
 	mov di,queue_O
 	mov cx,[queue_O_length]
 	queue_O_loop2_start:
 	cmp cx,0
 	je queue_O_loop2_end
-		assigndw [di],[di+4]
-		assigndw [di+2],[di+6]
-		add di,4
+		assigndw [di],[di+6]
+		assigndw [di+2],[di+8]
+		assigndw [di+4],[di+10]
+		add di,6
 		dec cx
 		jmp queue_O_loop2_start
 	queue_O_loop2_end:
 	queue_O_not_show:
 	ret
 
-;%1:queue_O
-%macro updata_queue_O_
-	assigndw word[queue_option1],%1
-	assigndw word[queue_option2],%2
-	assigndw word[queue_option3],%3
-	assigndw word[queue_option4],%4
-	call updata_queue_O
-%endmacro
 
 
 updata_queue_I:
@@ -766,7 +823,7 @@ updata_queue_I:
 		mov bx,[di]
 		dec bx
 		mov [di],bx
-		add di,4
+		add di,6
 		dec cx
 		jmp queue_I_loop1_start
 	queue_I_loop1_end:				;dec the position
@@ -782,19 +839,21 @@ updata_queue_I:
 	mov di,queue_I					;take out the first element to queue_O
 	mov ax,[queue_O_length]
 	dec ax
-	mov cx,4
+	mov cx,6
 	mul cx
 	mov si,ax
 	assigndw word[queue_O+si],[di]
 	assigndw word[queue_O+si+2],2500d			;cahnge here to change position
+	assigndw word[queue_O+si+4],0d
 	mov di,queue_I
 	mov cx,[queue_I_length]
 	queue_I_loop2_start:
 	cmp cx,0
 	je queue_I_loop2_end
-		assigndw [di],[di+4]
-		assigndw [di+2],[di+6]
-		add di,4
+		assigndw [di],[di+6]
+		assigndw [di+2],[di+8]
+		assigndw [di+4],[di+10]
+		add di,6
 		dec cx
 		jmp queue_I_loop2_start
 	queue_I_loop2_end:
@@ -817,7 +876,7 @@ show_roadblock:					;check queue_I and display the roadblock
 		assigndw [display_matrix_option+6],2d
 		assigndb [display_matrix_option+8],[i8]
 		call display_matrix
-		add di,4
+		add di,6
 		mov cx,[i16]
 		dec cx
 		mov [i16],cx
@@ -829,6 +888,152 @@ show_roadblock:					;check queue_I and display the roadblock
 %macro show_roadblock_ 1
 	assigndb [i8],%1
 	call show_roadblock
+%endmacro
+
+;------------------------------------------------------------------------------------
+apple_updata_queue_O:						;queue to cotrol the roadblock
+	mov di,apple_queue_O+2				;di save the address
+	mov cx,[apple_queue_O_length]
+	cmp cx,0
+	je apple_queue_O_not_show
+	apple_queue_O_loop1_start:
+	cmp cx,0
+	je apple_queue_O_loop1_end
+		mov bx,[di]
+		dec bx
+		mov [di],bx
+		add di,6							;这里因为每个数据的大小不一样
+		dec cx
+		jmp apple_queue_O_loop1_start
+	apple_queue_O_loop1_end:				;dec the position
+	mov ax,word[apple_queue_O+2]			;check the limit
+	cmp ax,294d								;不是一进入屏幕就要显示
+	ja apple_queue_O_not_show
+	mov cx,[apple_queue_I_length]			;updata the length
+	inc cx
+	mov [apple_queue_I_length],cx
+	mov cx,[apple_queue_O_length]
+	dec cx
+	mov [apple_queue_O_length],cx
+	mov di,apple_queue_O					;take out the first element to queue_I
+	mov ax,[apple_queue_I_length]
+	dec ax
+	mov cx,6								;数据的大小不一样
+	mul cx
+	mov si,ax
+	assigndw word[apple_queue_I+si],[di]
+	assigndw word[apple_queue_I+si+2],[di+2]
+	assigndw word[apple_queue_I+si+4],[di+4];数据的大小不一样
+	mov di,apple_queue_O
+	mov cx,[apple_queue_O_length]
+	apple_queue_O_loop2_start:
+	cmp cx,0
+	je apple_queue_O_loop2_end
+		assigndw [di],[di+6]
+		assigndw [di+2],[di+8]
+		assigndw [di+4],[di+10]				;数据的大小不一样
+		add di,6							;数据的大小不一样
+		dec cx
+		jmp apple_queue_O_loop2_start
+	apple_queue_O_loop2_end:
+	apple_queue_O_not_show:
+	ret
+
+
+apple_updata_queue_I:
+	mov di,apple_queue_I+2				;di save the address
+	mov cx,[apple_queue_I_length]
+	cmp cx,0
+	je apple_queue_I_not_show
+	apple_queue_I_loop1_start:
+	cmp cx,0
+	je apple_queue_I_loop1_end
+		mov bx,[di]
+		dec bx
+		mov [di],bx
+		add di,6							;改
+		dec cx
+		jmp apple_queue_I_loop1_start
+	apple_queue_I_loop1_end:				;dec the position
+	mov ax,word[apple_queue_I+2]			;check the limit
+	cmp ax,0d								;改这里
+	ja apple_queue_I_not_show
+	mov cx,[apple_queue_I_length]			;updata the length
+	dec cx
+	mov [apple_queue_I_length],cx
+	mov cx,[apple_queue_O_length]
+	inc cx
+	mov [apple_queue_O_length],cx
+	mov di,apple_queue_I					;take out the first element to queue_O
+	mov ax,[apple_queue_O_length]
+	dec ax
+	mov cx,6								;改
+	mul cx
+	mov si,ax
+	assigndw word[apple_queue_O+si],[di]
+	assigndw word[apple_queue_O+si+2],800d			;cahnge here to change position
+	assigndw word[apple_queue_O+si+4],0d
+	mov di,apple_queue_I
+	mov cx,[apple_queue_I_length]
+	apple_queue_I_loop2_start:
+	cmp cx,0
+	je apple_queue_I_loop2_end
+		assigndw [di],[di+6]						;改
+		assigndw [di+2],[di+8]
+		assigndw [di+4],[di+10]
+		add di,6									;改
+		dec cx
+		jmp apple_queue_I_loop2_start
+	apple_queue_I_loop2_end:
+	apple_queue_I_not_show:
+	ret
+
+
+show_apple:					;check queue_I and display the roadblock
+	mov di,apple_queue_I
+	mov [apple16],di			
+	assigndw [i16],[apple_queue_I_length]
+	;add16 [i16],2
+	show_apple_loop1_start:
+	mov cx,[i16]
+	cmp cx,0
+	je show_apple_loop1_end
+
+		mov di,[apple16]
+		mov ax,[di+4]
+		cmp ax,1
+		je eat_apple
+
+		mov di,[apple16]
+		display_prop_ [di],[di+2],apple,[b8]
+		mov di,[apple16]
+		mov ax,[di]
+		add ax,27d
+		mov [s16],ax
+		assigndw [p16],[di+2]
+		find_site [s16],[p16]
+		mov di,[newposition]
+		mov al,[es:di]
+		cmp al,3
+		jne eat_apple
+		mov di,[apple16]
+		mov word[di+4],1
+		display_prop_ [di],[di+2],apple,0
+		add16 [score],1
+
+		eat_apple:
+		add16 [apple16],6
+		mov cx,[i16]
+		dec cx
+		mov [i16],cx
+		jmp show_apple_loop1_start
+	show_apple_loop1_end:	
+	ret			
+
+
+%macro show_apple_ 1
+	assigndb [b8],%1
+	call show_apple
 %endmacro
 
 
@@ -929,6 +1134,7 @@ display_string:
 	mul cx
 	add ax,character_0
 	mov di,ax
+	display_matrix_ 10,250,27,8,0
 	display_character_ 10,250,4,di
 	mov ah,0
 	mov al,[n8]
@@ -936,6 +1142,7 @@ display_string:
 	mul cx
 	add ax,character_0
 	mov di,ax
+	display_matrix_ 10,260,27,8,0
 	display_character_ 10,260,4,di
 %endmacro
 
@@ -954,6 +1161,7 @@ int_8_timer:
 	add16 [timer_flag1],1
 	add16 [timer_flag2],1
 	add16 [timer_flag3],1
+	add16 [timer_flag4],1
 
 	mov al,0x20			
 	mov dx,0x20
@@ -1034,12 +1242,14 @@ uboot:
 	setcoular 1,255d,0,0			;1 represent red
 	setcoular 2,0,255d,0			;2 represent green
 	setcoular 3,0,0d,255d			;3 represent blue
-	setcoular 4,88d,88d,88d			
+	setcoular 4,88d,88d,88d	
+	setcoular 5,255d,10d,10d	
+	setcoular 6,63d,72d,204d
 	
 	display_string_ 100d,50d,1,stringp1		;show welcome page
 	delay___ 100
 	cls
-
+	;display_matrix_  5,5,24,27,3
 
 
 ;---------------------------------------------------------------main opration-------------------------------------------------------------
@@ -1091,7 +1301,7 @@ uboot:
 	cmp ax,2d				;change here to change time's length
 	jb next_check
 		assigndw [timer_flag3],0
-		show_roadblock_ 0
+		show_roadblock_ 0					;clear
 		call updata_queue_O
 		call updata_queue_I
 		assigndw [co_detection],1h			;open the function of detection
@@ -1099,6 +1309,23 @@ uboot:
 		assigndw [co_detection],0h			;close the function of detection
 	next_check:
 
+	mov ax,[timer_flag4]
+	cmp ax,4d				
+	jb next_check_apple
+		assigndw [timer_flag4],0
+		show_apple_ 0
+		call apple_updata_queue_O
+		call apple_updata_queue_I
+		;assigndw [co_detection],1h			;open the function of detection
+		show_apple_ 5					;game over when detection
+		;assigndw [co_detection],0h			;close the function of detection
+		display_num [score]
+	next_check_apple:
+
+	; display_prop_ 5,5,apple
+	; display_prop_ 70,20,fire
+	; display_rex_ 100,30,rex_runl
+	; jmp $
 
 	;display_character_ 10,250,4,character_0
 	;display_character_ 10,260,4,character_6
@@ -1255,282 +1482,3 @@ display_option4	dw 	0
 
 
 
-
-
-
-
-
-
-
-
-
-; org 0x8400
-
-; mov ax,cs
-; mov es,ax
-; jmp denglu
-; ;jmp duqu
-; mima db'zmk'
-; error db'error!'
-; string db'Welcome to ZMK system:'
-; %macro assigndw	2
-; 	mov ax,%2
-; 	mov %1,ax
-; %endmacro
-
-
-; %macro assigndb	2
-; 	mov al,%2
-; 	mov %1,al
-; %endmacro
-
-; ; *************************键盘输入***************************
-; jianpan:
-; 	mov ax,0xb800
-; 	mov es,ax
-; 	line1   dw  50d
-
-	
-; 	mov word[ds:0x24],key_put_in
-; 	mov word [ds:0x26],0
-	
-; 	sti
-	
-; 	jmp $
-
-; key_put_in:
-; 	push ax
-; 	push bx
-; 	push cx
-; 	push dx
-; 	push si
-; 	push di
-; 	push es
-
-; 	mov dx,0x20			;键盘扫描码读入al
-; 	mov al,0x61
-; 	out dx,al
-; 	mov dx,0x60			;键盘地址60
-; 	in al,dx
-
-; 	cmp al,0x1e         ;a
-; 	je key_a
-;     cmp al,0x1f
-;     je key_s
-;     jmp key_put_in_end
-
-; key_a:
-;     ; assigndw [update_flag],1
-;     mov ax,[line1]
-;     cmp ax,1
-;     je key_put_in_end
-;     ;assigndw [line1_before],[line1]
-;     dec word[line1]
-;     jmp key_put_in_end
-
-; key_s:
-;     ; assigndw [update_flag],1
-;     mov ax,[line1]
-;     cmp ax,200d
-;     je key_put_in_end
-;     ;assigndw [line1_before],[line1]
-;     inc word[line1]
-;     jmp key_put_in_end
-	
-; key_put_in_end:
-; 	pop es
-; 	pop di
-; 	pop si
-; 	pop dx
-; 	pop cx
-; 	pop bx
-; 	pop ax
-; 	iret
-
-; ; *****************显示输入密码******************
-	
-; denglu:
-; 	mov si,0        ;密码计数
-; 	mov di,0
-; 	mov ax,string
-; 	mov bp,ax
-; 	jmp tishi 
-	
-; panduan:
-; 	;call jianpan
-; 	mov bl,byte[mima+di]
-; 	mov ah,0x00
-; 	int 16h
-; 	cmp bl,al
-; 	je zhengque         ;密码相等跳转
-; 	jmp cuowu           ;密码不相等跳转
-	
-; tiaozhuan:
-; 	;cmp si,3
-; 	cmp si,2
-; 	ja hanzi 
-; 	jmp panduan
-	
-; zhengque:
-; 	inc di
-; 	inc si
-; 	jmp tiaozhuan
-	
-; cuowu:
-; 	mov ax,error
-; 	mov bp,ax
-; 	jmp cuowutishi
-	
-; tishi:
-; 	mov AH,13H
-; 	mov BH,0h
-; 	mov AL,1
-; 	mov BL,31h
-; 	mov CX,16h
-; 	int 10H
-; 	jmp panduan
-	
-; cuowutishi:
-; 	mov AH,13H
-; 	mov BH,0h
-; 	mov AL,1
-; 	mov BL,40h
-; 	mov CX,7h
-; 	mov DH,10h
-; 	mov DL,18h
-; 	int 10H
-; 	jmp panduan
-	
-; ; *********************显示汉字***********************
-; hanzi:
-; 	jmp duqu
-	
-; zi  db 1,1,1,1,1,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0  ;54
-; 	db 0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 1,1,1,1,1,1,0,1,0,1,0,0,0,0,0,0,0,1,0,0,1,1,1,1,1,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1
-; 	db 1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,1,1,1,1,1,1,0,1,0,0,0,1,0,0,0,1
-; 	db 1,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1
-; 	db 1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,1,0,0,0,1
-; 	db 1,1,1,1,1,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,1,1,1,1,1,1
-; 	db 0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,1,0,0,1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,1,0,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,1,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0  ;17
-	
-; duqu:
-; 	mov al,0x13
-; 	mov ah,0x00
-; 	int 0x10		;进入显示模式
-	
-; 	mov ax,0xa000
-; 	mov es,ax
-; 	mov ax,0
-; 	mov ds,ax
-	
-; 	mov si,zi
-; 	mov di,16134d
-	
-; 	mov al,0
-; 	loop1_start:   ;外循环开始（zi分17行去读取判断）
-; 		cmp al,17d
-; 		je loop1_out
-; 			mov dx,0
-; 			loop2_start:       ;内循环开始（zi分54列去判断读取）
-; 				cmp dx,54d
-; 				je loop2_out
-; 				mov bl,[ds:si]
-; 				cmp bl,0
-; 				je loop2
-; 				mov byte[es:di],0x09
-; 				loop2:         ;si，di，dx加一移位判断是‘0’，是‘1’
-; 					inc si
-; 					inc di
-; 					inc dx
-; 					jmp loop2_start
-; 					loop2_out:
-; 						add di,320d
-; 						sub di,54d
-; 						inc al
-; 						jmp loop1_start
-; 		loop1_out:
-; 			jmp exit
-			
-; 	exit:
-; 		call jianpan
-; 		cmp al,'a'
-; 		je huatu
-; 		jmp hanzi
-	
-; 	; ***************画图******************
-	
-; 	huatu:
-	
-; 	keyin db '0000000000000'
-	
-; 	fangkuang:
-; 		mov AL,0x13
-; 		mov AH,0x00
-; 		INT 0x10
-		
-; 		mov ax,0x0a000
-; 		mov es,ax
-		
-; 		mov ax,0x00+19280
-; 		mov bx,ax
-; 		mov ax,0x00+19460
-; 		mov SI,ax
-		
-; 		mov dx,0x3c9
-; 	mov al,80
-; 	out dx,al
-
-; 	mov dx,0x3c9
-; 	mov al,60
-; 	out dx,al
-
-; 	mov dx,0x3c9
-; 	mov al,100
-; 	out dx,al
-
-; 	mov dx,0x3c8
-; 	mov al,11
-; 	out dx,al
-	
-; 	call star
-; 	jmp $
-	
-;  star:
-;     n:	
-; 		mov bp,0
-; 		mov byte[es:bx],11
-; 		inc bx 
-; 		cmp bx,SI
-; 		jb n
-; 		cmp bx,38640
-; 		jae p
-;     m:
-; 		inc bx
-; 		inc bp
-; 		cmp bp,140
-; 		jb m
-;     	mov bp,0
-;     q:	
-; 		inc SI
-; 		inc bp
-;     	cmp bp,320
-; 		jb q
-; 		cmp bp,320
-; 		jae n
-	
-;     p:	ret
-
-	
-	
-	
-	
