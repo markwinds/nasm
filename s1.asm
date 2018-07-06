@@ -187,7 +187,11 @@ p16				dw  0h
 s16				dw  0h
 i16				dw	0h											;temporary variable
 j16				dw	0h
+f16				dw  0h
+d16				dw  0h
 score			dw  0h
+fire_flag		dw  0h
+en_fire_check	dw  0h
 rex_site		dw	130d,80d									;main option when display rex
 rex_site_before	dw	130d,80d
 timer1			dw	0h
@@ -217,8 +221,11 @@ queue_I			dw		20d,330d,0h,	22d,600d,0h,	24d,1000d,0h,	26d,1500d,0h,		;high,posit
 
 apple_queue_O_length	dw	5h											;when you change the roadblock's(queue_O) number this option must been change to fit it
 apple_queue_I_length	dw	0h
-apple_queue_O			dw		40d,200d,0d,	50d,450d,0d,		40d,500d,0d,	50d,540d,0d,	50d,790d,0d,		20d,520d,0d			;line,row,flag
+apple_queue_O			dw		40d,200d,0d,	50d,450d,0d,		40d,500d,0d,	50d,540d,0d,	50d,790d,2d,		20d,520d,0d			;line,row,flag
 apple_queue_I			dw		10d,50d,0d,		20d,100d,0d,		20d,520d,0d,	20d,330d,0d,	20d,480d,0d,		20d,520d,0d
+
+bullet_queue_length		dw  0h
+bullet_queue	dw  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0
 
 newposition		dw	0000h										;use to transfer parameters
 point1			dw	30d,48d										;save point1's position
@@ -570,6 +577,17 @@ display_matrix:
 			mov dl,[es:si]
 			cmp dl,3
 			je game_over
+			jmp no_detection
+
+			mov dx,[en_fire_check]				;collision detection 
+			cmp dx,1
+			jne no_detection
+			mov dl,[es:si]
+			; cmp dl,7
+			; jne no_detection
+			mov di,[d16]
+			assigndw [di+4],1
+			
 			no_detection:
 			mov cl,byte[display_matrix_option+8]
 			mov byte[es:si],cl
@@ -868,19 +886,26 @@ show_roadblock:					;check queue_I and display the roadblock
 	mov cx,[i16]
 	cmp cx,0
 	je show_roadblock_loop1_end
+		mov ax,[di+4]
+		cmp ax,1
+		je not_show_roadblock
 		mov ax,167d
 		sub ax,[di]
 		mov [display_matrix_option],ax
+		;assigndw [d16],di
 		assigndw [display_matrix_option+2],[di+2]
 		assigndw [display_matrix_option+4],[di]
 		assigndw [display_matrix_option+6],2d
 		assigndb [display_matrix_option+8],[i8]
 		call display_matrix
+		;assigndw [di+4],1
 		add di,6
 		mov cx,[i16]
 		dec cx
 		mov [i16],cx
 		jmp show_roadblock_loop1_start
+		jmp show_roadblock_loop1_end
+		not_show_roadblock:
 	show_roadblock_loop1_end:	
 	ret			
 
@@ -972,7 +997,16 @@ apple_updata_queue_I:
 	mov si,ax
 	assigndw word[apple_queue_O+si],[di]
 	assigndw word[apple_queue_O+si+2],800d			;cahnge here to change position
+	mov ax,word[di+4]
+	cmp ax,2
+	je fire_init
+	cmp ax,3
+	je fire_init
 	assigndw word[apple_queue_O+si+4],0d
+	jmp out_fire_init
+	fire_init:
+	assigndw word[apple_queue_O+si+4],2d
+	out_fire_init:
 	mov di,apple_queue_I
 	mov cx,[apple_queue_I_length]
 	apple_queue_I_loop2_start:
@@ -1003,9 +1037,24 @@ show_apple:					;check queue_I and display the roadblock
 		mov ax,[di+4]
 		cmp ax,1
 		je eat_apple
+		cmp ax,3
+		je eat_apple
 
+		cmp ax,2
+		jne is_apple
+		mov al,[b8]
+		cmp al,0
+		je clear_fire
+		add8 [b8],1
+		display_prop_ [di],[di+2],fire,[b8]
+		jmp check_co
+		clear_fire:
+		display_prop_ [di],[di+2],fire,0
+		jmp check_co
+		is_apple:
 		mov di,[apple16]
 		display_prop_ [di],[di+2],apple,[b8]
+		check_co:
 		mov di,[apple16]
 		mov ax,[di]
 		add ax,27d
@@ -1017,9 +1066,18 @@ show_apple:					;check queue_I and display the roadblock
 		cmp al,3
 		jne eat_apple
 		mov di,[apple16]
+		mov ax,word[di+4]
+		cmp ax,2
+		je is_fire
 		mov word[di+4],1
 		display_prop_ [di],[di+2],apple,0
 		add16 [score],1
+		jmp eat_apple
+		is_fire:
+		mov word[di+4],3
+		display_prop_ [di],[di+2],fire,0
+		assigndw [fire_flag],1000d
+	
 
 		eat_apple:
 		add16 [apple16],6
@@ -1036,6 +1094,69 @@ show_apple:					;check queue_I and display the roadblock
 	call show_apple
 %endmacro
 
+show_fire:
+	mov di,bullet_queue			
+	assigndw [i16],[bullet_queue_length]
+	show_fire_loop1_start:
+	mov cx,[i16]
+	cmp cx,0
+	je show_fire_loop1_end
+		assigndw [display_matrix_option],[di]
+		assigndw [display_matrix_option+2],[di+2]
+		assigndw [display_matrix_option+4],2d
+		assigndw [display_matrix_option+6],2d
+		assigndb [display_matrix_option+8],[f16]
+		call display_matrix
+		add di,4
+		mov cx,[i16]
+		dec cx
+		mov [i16],cx
+		jmp show_fire_loop1_start
+	show_fire_loop1_end:	
+	ret
+
+
+
+
+updata_fire:
+	assigndw [f16],0
+	call show_fire
+	mov di,bullet_queue+2				;di save the address
+	mov cx,[bullet_queue_length]
+	cmp cx,0
+	je bullet_queue_not_show
+	bullet_queue_loop1_start:
+	cmp cx,0
+	je bullet_queue_loop1_end
+		mov bx,[di]
+		inc bx
+		mov [di],bx
+		add di,4
+		dec cx
+		jmp bullet_queue_loop1_start
+	bullet_queue_loop1_end:				;dec the position
+	mov ax,word[bullet_queue+2]			;check the limit
+	cmp ax,310d
+	jb bullet_queue_show
+	mov cx,[bullet_queue_length]			;updata the length
+	dec cx
+	mov [bullet_queue_length],cx
+	mov di,bullet_queue
+	mov cx,[bullet_queue_length]
+	bullet_queue_loop2_start:
+	cmp cx,0
+	je bullet_queue_loop2_end
+		assigndw [di],[di+4]
+		assigndw [di+2],[di+6]
+		add di,4
+		dec cx
+		jmp bullet_queue_loop2_start
+	bullet_queue_show:
+	assigndw [f16],7
+	call show_fire
+	bullet_queue_loop2_end:
+	bullet_queue_not_show:
+	ret
 
 ;--------------------------------------------------function for show string and character-----------------------------------------
 display_character:                  
@@ -1162,6 +1283,13 @@ int_8_timer:
 	add16 [timer_flag2],1
 	add16 [timer_flag3],1
 	add16 [timer_flag4],1
+	add16 [timer_flag5],1
+	mov ax,[fire_flag]
+	cmp ax,0
+	je no_fire
+	dec ax
+	mov [fire_flag],ax
+	no_fire:
 
 	mov al,0x20			
 	mov dx,0x20
@@ -1193,9 +1321,12 @@ key_put_in:
 	in al,dx
 
 	cmp al,0x1e
-	jne key_put_in_end
+	je A
+	cmp al,0x1f
+	je S
+	jmp key_put_in_end
 
-
+	A:
 	mov al,[rex_state]
 	cmp al,0
 	je key_put_in_end
@@ -1204,6 +1335,23 @@ key_put_in:
 	assigndb [v_flag],0d
 	assigndb [rex_picture],1
 	assigndb [rex_picture_next],1
+	jmp key_put_in_end
+
+	S:
+	mov ax,[fire_flag]
+	cmp ax,0
+	je key_put_in_end
+	mov di,bullet_queue					
+	mov ax,[bullet_queue_length]
+	mov cx,4
+	mul cx
+	add di,ax
+	assigndw [di],12
+	add16 [di],[rex_site]
+	assigndw [di+2],32
+	add16 [di+2],[rex_site+2]
+	add16 [bullet_queue_length],1
+	jmp key_put_in_end
 
 	key_put_in_end:
 
@@ -1245,8 +1393,10 @@ uboot:
 	setcoular 4,88d,88d,88d	
 	setcoular 5,255d,10d,10d	
 	setcoular 6,63d,72d,204d
+	setcoular 7,96d,204d,63d
 	
-	display_string_ 100d,50d,1,stringp1		;show welcome page
+	display_string_ 100d,50d,1,stringp3		;show welcome page
+	display_string_ 50d,50d,1,stringp1		;show welcome page
 	delay___ 100
 	cls
 	;display_matrix_  5,5,24,27,3
@@ -1305,8 +1455,10 @@ uboot:
 		call updata_queue_O
 		call updata_queue_I
 		assigndw [co_detection],1h			;open the function of detection
+		;assigndw [en_fire_check],1h
 		show_roadblock_ 1					;game over when detection
 		assigndw [co_detection],0h			;close the function of detection
+		;assigndw [en_fire_check],0h
 	next_check:
 
 	mov ax,[timer_flag4]
@@ -1322,14 +1474,13 @@ uboot:
 		display_num [score]
 	next_check_apple:
 
-	; display_prop_ 5,5,apple
-	; display_prop_ 70,20,fire
-	; display_rex_ 100,30,rex_runl
-	; jmp $
-
-	;display_character_ 10,250,4,character_0
-	;display_character_ 10,260,4,character_6
-	;display_num 485d
+	
+	mov ax,[timer_flag5]
+	cmp ax,2d				
+	jb next_check_fire
+		assigndw [timer_flag5],0
+		call updata_fire
+	next_check_fire:
 
 
 	jmp main_opration
@@ -1428,6 +1579,7 @@ character_9	DB  000,000,000,000,07Ch,0EEh,0E7h,0E7h,0E7h,0E7h,07Fh,007h,006h,00E
 
 stringp1	db 'press a to jump#'				;you can show string
 stringp2	db 'all designed by mark#'
+stringp3	db 'press s to attack#'
 
 
 
