@@ -1,21 +1,12 @@
-;	I write annotation in english because I was suffered from change input method
-;	I will show you my code style below
-;	1.I always manage line data first than row in follow code. 
-;	2.function name:   A:function(call)
-;					   A_ or A__:macro
-;	3.I am sorry for that I don't distinguish variable name and label name.
-;	4.I have a terrible retract, please don't care about it.
-;
-;
+;We always manage line data first than row in follow code. 
 ;6.11	add a function to display matrix
-;6.25 	change interrupt vector table for timer
-;7.5 	add some annotations
+;6.25 change interrupt vector table for timer
 org 8400h
 
 jmp uboot
 
-;--------------------------------------------------------------data segment--------------------------------------------------
-rex_start	db	00000000b,00000000b,01111111b,11111100b		;37line*4byte  the picture is showed when rex jump or stop
+;----------------------------------------------data segment-----------------------------------
+rex_start	db	00000000b,00000000b,01111111b,11111100b		;37line*4byte
 			db	00000000b,00000000b,01111111b,11111100b
 			db	00000000b,00000001b,11111111b,11111111b
 			db	00000000b,00000001b,11111111b,11111111b
@@ -129,7 +120,7 @@ rex_runr	db	00000000b,00000000b,01111111b,11111100b		;37line*4byte
 			db	00000111b,10000000b,00000000b,00000000b
 			db	00000111b,10000000b,00000000b,00000000b
 
-rex_die		db	00000000b,00000000b,01111111b,11111100b		;37line*4byte  the picture is showed when rex die
+rex_die		db	00000000b,00000000b,01111111b,11111100b		;37line*4byte
 			db	00000000b,00000000b,01111111b,11111100b
 			db	00000000b,00000001b,11111111b,11111111b
 			db	00000000b,00000001b,11100011b,11111111b
@@ -187,15 +178,15 @@ v_init			dw	14d
 rex_v			dw	0h
 g				dw	1h
 co_detection	dw	0h											;control collision detection
-queue_O_length_block	dw	6h											;when you change the roadblock's(queue_O) number this option must been change to fit it
-queue_I_length_block	dw	0h
-queue_O_block			dw		20d,330d,	22d,600d,	24d,1000d,	26d,1500d,		;high,position
-						dw		28d,2000d,	20d,2100d,	450d,32d,	470d,34d
-						dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
-						dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
-queue_I_block			dw		10d,50d,	20d,100d,   30d,150d,	40d,200d		
-						dw		50d,250d,	60d,30d,	450d,32d,	470d,34d
-						dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
+queue_O_length	dw	6h											;when you change the roadblock's(queue_O) number this option must been change to fit it
+queue_I_length	dw	0h
+queue_O			dw		20d,330d,	22d,600d,	24d,1000d,	26d,1500d,		;high,position
+				dw		28d,2000d,	20d,2100d,	450d,32d,	470d,34d
+				dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
+				dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
+queue_I			dw		10d,50d,	20d,100d,   30d,150d,	40d,200d		
+				dw		50d,250d,	60d,30d,	450d,32d,	470d,34d
+				dw		490d,36d,	510d,38d,	530d,40d,	550d,42d
 
 newposition		dw	0000h										;use to transfer parameters
 point1			dw	30d,48d										;save point1's position
@@ -208,10 +199,6 @@ god         	dw	1h
 god1        	dw  1h
 god2        	dw  1h
 god3        	dw  1h
-queue_option1	dw  0h
-queue_option2	dw  0h
-queue_option3	dw  0h
-queue_option4	dw  0h
 display_matrix_option	dw	0h,0h,0h,0h
 						db	0h
 
@@ -219,7 +206,6 @@ display_matrix_option	dw	0h,0h,0h,0h
 i8				db	0											;temporary variable
 j8				db	0
 s8				db	01101110b
-n8				db  0h
 keyin 			db 	'000000000000000000000000000000000000000'	;use to save the characters you input
 hint			db 	'Please put in you personal password.#'		;show the marked words
 errors 			db 	'error!#'
@@ -232,9 +218,8 @@ rex_picture_next	db	2h
 
 
 
-
-;-------------------------------------------------------function for text mode-----------------------------------------------
-;the code below is not used after I want to write code of rex
+find_site
+;--------------------------------------------function for text mode-------------------------------------
 judgesecret:
 	;默认进入80*25的文本模式，起始地址0xB8000
 	;es 显存地址
@@ -341,7 +326,7 @@ input:
 
 
 
-;-----------------------------------------------------------public function-----------------------------------------------------------
+;---------------------------------------public function-------------------------------------------
 %macro add8 2
 	mov ax,0
 	mov al,byte%1
@@ -422,8 +407,7 @@ delay__:							;delay long time
 	ret
 
 
-;change the option can change the time you want dalay
-%macro delay___ 1				
+%macro delay___ 1
 	mov dl,%1
 	call delay__
 %endmacro
@@ -453,8 +437,8 @@ displaypoint:						;dx represent line   bx represent row  cl represent colour  N
 	ret
 
 
-god___:								;the name seemed funny, I use it to debug that trouble me for some hours
-        mov ax,[di]					;it can show if the procedure is running by showing point in screen
+god___:
+        mov ax,[di]
         cmp ax,1
         je god_
         mov ax,1
@@ -494,12 +478,12 @@ god___:								;the name seemed funny, I use it to debug that trouble me for som
 
 
 
-;---------------------------------------------------------------set for display-----------------------------------------------------------
+;----------------------------------------set for display----------------------------------------------
 ;%1:the point's line number   %2:the point's row number
 ;%3:the matrix's high		  %4:the matrix's wide		%5:coular
 display_matrix:
 	;local matrixloop1,matrixloop1_in,matrixloop2,matrixloop2_in,matrixoutloop2,matrixoutloop1	
-	mov ax,[display_matrix_option]		;too check if point's position is out of limit
+	mov ax,[display_matrix_option]
 	add ax,[display_matrix_option+4]
 	cmp ax,200d
 	jbe matrix_noting
@@ -539,7 +523,7 @@ display_matrix:
 		cmp bx,[display_matrix_option+6]
 		je matrixoutloop2
 		matrixloop2_in:
-			mov dx,[co_detection]				;collision detection 
+			mov dx,[co_detection]				;collision detection
 			cmp dx,1
 			jne no_detection
 			mov dl,[es:si]
@@ -560,8 +544,6 @@ display_matrix:
 	ret
 
 
-;show matrix 
-;for example   display_matrix_ 3,4,6,7,3  show matrix that high 6 wide 7 in 3 line 4 row with colure 3
 %macro display_matrix_  5
 	assigndw [display_matrix_option],%1
 	assigndw [display_matrix_option+2],%2
@@ -571,12 +553,11 @@ display_matrix:
 	call display_matrix
 %endmacro
 
-;clear the screen
+
 %macro cls 0
 	display_matrix_ 1,1,200,320,0
 %endmacro
 
-;printf 8 pixel from a byte data
 print_byte:			;	mov bh,%1 	printf a byte from s8
 	mov bl,10000000b
 	mov al,0
@@ -610,7 +591,7 @@ display_rex:
 		cmp al,4d
 		je rex_loop2_out
 			assigndb [s8],[di]
-			mov cl,3							;if want change rex's coular, you should change the value of cl. And you must change the collision detection
+			mov cl,3							;if want change rex's coular, you should change the value of cl
 			call print_byte
 			inc di
 			mov al,[j8]
@@ -660,7 +641,7 @@ show_picture:
 
 
 
-;------------------------------------------------------------contral algorithm------------------------------------------------------------
+;-----------------------------------------contral algorithm-------------------------------------
 updata_position:	;when rex is off the ground, this function will find the position that rex fit
 	mov al,[v_flag]
 	cmp al,0
@@ -672,7 +653,7 @@ updata_position:	;when rex is off the ground, this function will find the positi
 	mov [rex_v],bx
 	add ax,bx
 	mov [rex_site],ax
-	;mygod 7,20,god				;use 'mygod' you can check if you system is running
+	;mygod 7,20,god
 	mov ax,[v_init]
 	mov bx,[rex_v]
 	cmp bx,ax
@@ -744,15 +725,6 @@ updata_queue_O:						;queue to cotrol the roadblock
 	queue_O_loop2_end:
 	queue_O_not_show:
 	ret
-
-;%1:queue_O
-%macro updata_queue_O_
-	assigndw word[queue_option1],%1
-	assigndw word[queue_option2],%2
-	assigndw word[queue_option3],%3
-	assigndw word[queue_option4],%4
-	call updata_queue_O
-%endmacro
 
 
 updata_queue_I:
@@ -832,7 +804,7 @@ show_roadblock:					;check queue_I and display the roadblock
 %endmacro
 
 
-;--------------------------------------------------function for show string and character-----------------------------------------
+;-----------------------------------------function for show string and character--------------------------
 display_character:                  
 	assigndb [i8],0
 	display_character_loop1:
@@ -914,34 +886,8 @@ display_string:
 	call display_string
 %endmacro
 
-%macro display_num 1
-	mov ax,%1
-	mov bl,100d
-	div bl
-	mov al,ah
-	mov ah,0
-	mov bl,10d
-	div bl
-	mov [n8],ah
 
-	mov ah,0
-	mov cx,17d
-	mul cx
-	add ax,character_0
-	mov di,ax
-	display_character_ 10,250,4,di
-	mov ah,0
-	mov al,[n8]
-	mov cx,17d
-	mul cx
-	add ax,character_0
-	mov di,ax
-	display_character_ 10,260,4,di
-%endmacro
-
-
-
-;-----------------------------------------------------------interrupt function-----------------------------------------------------
+;-----------------------------------------------------------interrupt function---------------------------------------------
 int_8_timer:
 	push ax
 	push bx
@@ -1010,7 +956,8 @@ key_put_in:
 
 
 
-;----------------------------------------------------------------main-------------------------------------------------------------
+;game_over:
+;--------------------------------------------------main------------------------------------------
 uboot:
 	;VGA320*200*8 display mode  320row 200line
 	;start memory: a000h 0xa000
@@ -1034,7 +981,6 @@ uboot:
 	setcoular 1,255d,0,0			;1 represent red
 	setcoular 2,0,255d,0			;2 represent green
 	setcoular 3,0,0d,255d			;3 represent blue
-	setcoular 4,88d,88d,88d			
 	
 	display_string_ 100d,50d,1,stringp1		;show welcome page
 	delay___ 100
@@ -1042,7 +988,7 @@ uboot:
 
 
 
-;---------------------------------------------------------------main opration-------------------------------------------------------------
+;--------------------------------------------------main opration----------------------------------------------------
 	;timer3 and timer4 are set for timekeeping,and main opration is in the loop.
 	;timer1 and timer2 are set for different request of diferent length of time.
 	mov ax,[rex_site]
@@ -1098,13 +1044,6 @@ uboot:
 		show_roadblock_ 1					;game over when detection
 		assigndw [co_detection],0h			;close the function of detection
 	next_check:
-
-
-	;display_character_ 10,250,4,character_0
-	;display_character_ 10,260,4,character_6
-	;display_num 485d
-
-
 	jmp main_opration
 
 	
@@ -1122,7 +1061,7 @@ jmp $
 
 
 
-;--------------------------------------------------------character library----------------------------------------------------------
+;------------------------------------------character library---------------------------------------
 character_a	DB  000,000,000,000,000,000,000,07Ch,06Eh,00Eh,07Eh,0EEh,0EEh,0FEh,000,000
 			DB  000
 character_b DB  000,000,000,000,0E0h,0E0h,0E0h,0FEh,0F7h,0E7h,0E3h,0E7h,0E7h,0FEh,000,000
@@ -1177,27 +1116,6 @@ character_z	DB  000,000,000,000,000,000,000,0FCh,01Ch,038h,030h,070h,0E0h,0FCh,0
 			DB  000
 character_block	DB 000,000,000,000,000,000,000,0h,0h,0h,00,0h,0h,0h,000,000
 			DB  000
-character_0 DB  000,000,000,000,03Eh,07Eh,0E7h,0E7h,0E7h,0E7h,0E7h,0E7h,0E7h,07Eh,03Ch,000
-			DB  000
-character_1 DB  000,000,000,000,01Ch,03Ch,07Ch,01Ch,01Ch,01Ch,01Ch,01Ch,01Ch,01Ch,01Ch,000
-			DB  000
-character_2 DB  000,000,000,000,07Ch,0EEh,007h,007h,006h,00Eh,01Ch,070h,060h,0E0h,0FFh,000
-			DB  000
-character_3	DB  000,000,000,000,07Ch,06Eh,006h,006h,00Eh,07Ch,00Eh,007h,007h,0CEh,0FCh,000
-			DB  000
-character_4	DB  000,000,000,000,00Eh,01Eh,01Eh,03Eh,07Eh,06Eh,0EEh,0FFh,00Eh,00Eh,00Eh,000
-			DB  000
-character_5	DB  000,000,000,000,07Eh,060h,060h,060h,07Ch,00Eh,007h,007h,007h,0EEh,0FCh,000
-			DB  000
-character_6	DB  000,000,000,000,03Fh,070h,060h,0E0h,0FEh,0F7h,0E7h,0E7h,0E7h,077h,03Eh,000
-			DB  000
-character_7	DB  000,000,000,000,0FFh,007h,00Eh,00Eh,00Ch,01Ch,018h,038h,038h,038h,030h,000
-			DB  000
-character_8	DB  000,000,000,000,03Eh,076h,0E7h,0E7h,076h,03Ch,0E7h,0E7h,0E7h,0E7h,07Eh,000
-			DB  000
-character_9	DB  000,000,000,000,07Ch,0EEh,0E7h,0E7h,0E7h,0E7h,07Fh,007h,006h,00Eh,0FCh,000
-			DB  000
-
 
 stringp1	db 'press a to jump#'				;you can show string
 stringp2	db 'all designed by mark#'
@@ -1248,289 +1166,3 @@ display_option4	dw 	0
 
 ;high in before  low display behind
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-; org 0x8400
-
-; mov ax,cs
-; mov es,ax
-; jmp denglu
-; ;jmp duqu
-; mima db'zmk'
-; error db'error!'
-; string db'Welcome to ZMK system:'
-; %macro assigndw	2
-; 	mov ax,%2
-; 	mov %1,ax
-; %endmacro
-
-
-; %macro assigndb	2
-; 	mov al,%2
-; 	mov %1,al
-; %endmacro
-
-; ; *************************键盘输入***************************
-; jianpan:
-; 	mov ax,0xb800
-; 	mov es,ax
-; 	line1   dw  50d
-
-	
-; 	mov word[ds:0x24],key_put_in
-; 	mov word [ds:0x26],0
-	
-; 	sti
-	
-; 	jmp $
-
-; key_put_in:
-; 	push ax
-; 	push bx
-; 	push cx
-; 	push dx
-; 	push si
-; 	push di
-; 	push es
-
-; 	mov dx,0x20			;键盘扫描码读入al
-; 	mov al,0x61
-; 	out dx,al
-; 	mov dx,0x60			;键盘地址60
-; 	in al,dx
-
-; 	cmp al,0x1e         ;a
-; 	je key_a
-;     cmp al,0x1f
-;     je key_s
-;     jmp key_put_in_end
-
-; key_a:
-;     ; assigndw [update_flag],1
-;     mov ax,[line1]
-;     cmp ax,1
-;     je key_put_in_end
-;     ;assigndw [line1_before],[line1]
-;     dec word[line1]
-;     jmp key_put_in_end
-
-; key_s:
-;     ; assigndw [update_flag],1
-;     mov ax,[line1]
-;     cmp ax,200d
-;     je key_put_in_end
-;     ;assigndw [line1_before],[line1]
-;     inc word[line1]
-;     jmp key_put_in_end
-	
-; key_put_in_end:
-; 	pop es
-; 	pop di
-; 	pop si
-; 	pop dx
-; 	pop cx
-; 	pop bx
-; 	pop ax
-; 	iret
-
-; ; *****************显示输入密码******************
-	
-; denglu:
-; 	mov si,0        ;密码计数
-; 	mov di,0
-; 	mov ax,string
-; 	mov bp,ax
-; 	jmp tishi 
-	
-; panduan:
-; 	;call jianpan
-; 	mov bl,byte[mima+di]
-; 	mov ah,0x00
-; 	int 16h
-; 	cmp bl,al
-; 	je zhengque         ;密码相等跳转
-; 	jmp cuowu           ;密码不相等跳转
-	
-; tiaozhuan:
-; 	;cmp si,3
-; 	cmp si,2
-; 	ja hanzi 
-; 	jmp panduan
-	
-; zhengque:
-; 	inc di
-; 	inc si
-; 	jmp tiaozhuan
-	
-; cuowu:
-; 	mov ax,error
-; 	mov bp,ax
-; 	jmp cuowutishi
-	
-; tishi:
-; 	mov AH,13H
-; 	mov BH,0h
-; 	mov AL,1
-; 	mov BL,31h
-; 	mov CX,16h
-; 	int 10H
-; 	jmp panduan
-	
-; cuowutishi:
-; 	mov AH,13H
-; 	mov BH,0h
-; 	mov AL,1
-; 	mov BL,40h
-; 	mov CX,7h
-; 	mov DH,10h
-; 	mov DL,18h
-; 	int 10H
-; 	jmp panduan
-	
-; ; *********************显示汉字***********************
-; hanzi:
-; 	jmp duqu
-	
-; zi  db 1,1,1,1,1,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0  ;54
-; 	db 0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 1,1,1,1,1,1,0,1,0,1,0,0,0,0,0,0,0,1,0,0,1,1,1,1,1,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1
-; 	db 1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,1,1,1,1,1,1,0,1,0,0,0,1,0,0,0,1
-; 	db 1,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1
-; 	db 1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,1,0,0,0,1
-; 	db 1,1,1,1,1,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,1,1,1,1,1,1
-; 	db 0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,1,0,0,1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,1,0,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,1,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0
-; 	db 0,0,0,0,0,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0  ;17
-	
-; duqu:
-; 	mov al,0x13
-; 	mov ah,0x00
-; 	int 0x10		;进入显示模式
-	
-; 	mov ax,0xa000
-; 	mov es,ax
-; 	mov ax,0
-; 	mov ds,ax
-	
-; 	mov si,zi
-; 	mov di,16134d
-	
-; 	mov al,0
-; 	loop1_start:   ;外循环开始（zi分17行去读取判断）
-; 		cmp al,17d
-; 		je loop1_out
-; 			mov dx,0
-; 			loop2_start:       ;内循环开始（zi分54列去判断读取）
-; 				cmp dx,54d
-; 				je loop2_out
-; 				mov bl,[ds:si]
-; 				cmp bl,0
-; 				je loop2
-; 				mov byte[es:di],0x09
-; 				loop2:         ;si，di，dx加一移位判断是‘0’，是‘1’
-; 					inc si
-; 					inc di
-; 					inc dx
-; 					jmp loop2_start
-; 					loop2_out:
-; 						add di,320d
-; 						sub di,54d
-; 						inc al
-; 						jmp loop1_start
-; 		loop1_out:
-; 			jmp exit
-			
-; 	exit:
-; 		call jianpan
-; 		cmp al,'a'
-; 		je huatu
-; 		jmp hanzi
-	
-; 	; ***************画图******************
-	
-; 	huatu:
-	
-; 	keyin db '0000000000000'
-	
-; 	fangkuang:
-; 		mov AL,0x13
-; 		mov AH,0x00
-; 		INT 0x10
-		
-; 		mov ax,0x0a000
-; 		mov es,ax
-		
-; 		mov ax,0x00+19280
-; 		mov bx,ax
-; 		mov ax,0x00+19460
-; 		mov SI,ax
-		
-; 		mov dx,0x3c9
-; 	mov al,80
-; 	out dx,al
-
-; 	mov dx,0x3c9
-; 	mov al,60
-; 	out dx,al
-
-; 	mov dx,0x3c9
-; 	mov al,100
-; 	out dx,al
-
-; 	mov dx,0x3c8
-; 	mov al,11
-; 	out dx,al
-	
-; 	call star
-; 	jmp $
-	
-;  star:
-;     n:	
-; 		mov bp,0
-; 		mov byte[es:bx],11
-; 		inc bx 
-; 		cmp bx,SI
-; 		jb n
-; 		cmp bx,38640
-; 		jae p
-;     m:
-; 		inc bx
-; 		inc bp
-; 		cmp bp,140
-; 		jb m
-;     	mov bp,0
-;     q:	
-; 		inc SI
-; 		inc bp
-;     	cmp bp,320
-; 		jb q
-; 		cmp bp,320
-; 		jae n
-	
-;     p:	ret
-
-	
-	
-	
-	
